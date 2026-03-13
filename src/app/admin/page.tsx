@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Plus, Users, FileText, Upload, LogOut, Loader2, CheckCircle2, Trash2, Edit3 } from 'lucide-react'
+import { Plus, Users, FileText, Upload, LogOut, Loader2, CheckCircle2, Trash2, Edit3, BookOpen } from 'lucide-react'
 
 export default function AdminDashboard() {
     const router = useRouter()
@@ -38,11 +38,27 @@ export default function AdminDashboard() {
     }
 
     const fetchStudents = async (parentId: string) => {
-        const { data } = await supabase
+        const { data: studentsData } = await supabase
             .from('students')
             .select('*')
             .eq('parent_id', parentId)
-        if (data) setStudents(data)
+
+        if (studentsData) {
+            // Fetch curriculum for all of this parent's students
+            const { data: curriculumData } = await supabase
+                .from('curriculum_weeks')
+                .select('id, title, student_id, start_date, end_date')
+                .eq('created_by', parentId)
+
+            const studentsWithCurriculum = studentsData.map(student => ({
+                ...student,
+                curriculum: curriculumData?.filter(c => c.student_id === student.id || c.student_id === null) || []
+            }))
+            
+            setStudents(studentsWithCurriculum)
+        } else {
+            setStudents([])
+        }
         setIsLoading(false)
     }
 
@@ -141,6 +157,9 @@ export default function AdminDashboard() {
 
             if (json.success) {
                 setUploadMessage(`✓ Saved "${json.weekTitle}" with ${json.modules} modules!`)
+                if (user) {
+                    fetchStudents(user.id)
+                }
             } else {
                 setUploadMessage(`⚠️ Error: ${json.error}`)
             }
@@ -217,11 +236,12 @@ export default function AdminDashboard() {
                             </div>
                         )}
                         {students.map(student => (
-                            <div key={student.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center group">
-                                <div>
-                                    <h3 className="font-bold text-lg text-slate-800">{student.name}</h3>
-                                    <p className="text-sm text-slate-500 font-mono">@{student.username}</p>
-                                </div>
+                            <div key={student.id} className="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col group">
+                                <div className="flex justify-between items-center w-full">
+                                    <div>
+                                        <h3 className="font-bold text-lg text-slate-800">{student.name}</h3>
+                                        <p className="text-sm text-slate-500 font-mono">@{student.username}</p>
+                                    </div>
                                 <div className="flex items-center gap-3">
                                     <div className="bg-slate-100 px-4 py-2 rounded-lg font-mono text-slate-600 font-bold text-sm tracking-widest flex items-center gap-2">
                                         PIN: {student.pin_code}
@@ -236,6 +256,23 @@ export default function AdminDashboard() {
                                     >
                                         <Trash2 size={20} />
                                     </button>
+                                </div>
+                            </div>
+                            <div className="w-full mt-4 pt-4 border-t border-slate-100">
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1">
+                                        <BookOpen size={12} /> Assigned Curriculum
+                                    </h4>
+                                    {student.curriculum && student.curriculum.length > 0 ? (
+                                        <div className="flex flex-wrap gap-2">
+                                            {student.curriculum.map((c: any) => (
+                                                <div key={c.id} className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                                                    {c.title}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-xs text-slate-400 italic">No curriculum assigned yet.</p>
+                                    )}
                                 </div>
                             </div>
                         ))}
