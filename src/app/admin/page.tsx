@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
-import { Plus, Users, FileText, Upload, LogOut, Loader2, CheckCircle2, Trash2, Edit3, BookOpen } from 'lucide-react'
+import { Plus, Users, FileText, Upload, LogOut, Loader2, CheckCircle2, Trash2, Edit3, BookOpen, XCircle } from 'lucide-react'
 
 export default function AdminDashboard() {
     const router = useRouter()
@@ -95,6 +95,18 @@ export default function AdminDashboard() {
         if (!confirm("Are you sure you want to delete this student and all their curriculum data?")) return
         setIsLoading(true)
         const { error } = await supabase.from('students').delete().eq('id', studentId)
+        if (!error && user) {
+            fetchStudents(user.id)
+        } else {
+            alert(error?.message)
+            setIsLoading(false)
+        }
+    }
+
+    const handleDeleteCurriculum = async (weekId: string) => {
+        if (!confirm("Are you sure you want to delete this curriculum week and all its subjects?")) return
+        setIsLoading(true)
+        const { error } = await supabase.from('curriculum_weeks').delete().eq('id', weekId)
         if (!error && user) {
             fetchStudents(user.id)
         } else {
@@ -265,8 +277,15 @@ export default function AdminDashboard() {
                                     {student.curriculum && student.curriculum.length > 0 ? (
                                         <div className="flex flex-wrap gap-2">
                                             {student.curriculum.map((c: any) => (
-                                                <div key={c.id} className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                                                <div key={c.id} className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold shadow-sm flex items-center gap-2 group/pill">
                                                     {c.title}
+                                                    <button 
+                                                        onClick={() => handleDeleteCurriculum(c.id)}
+                                                        className="text-indigo-300 hover:text-red-500 transition-colors"
+                                                        title="Delete this curriculum"
+                                                    >
+                                                        <XCircle size={14} />
+                                                    </button>
                                                 </div>
                                             ))}
                                         </div>
