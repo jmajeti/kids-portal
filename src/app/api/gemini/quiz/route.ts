@@ -8,120 +8,157 @@ const google = createGoogleGenerativeAI({
 
 export const maxDuration = 30 // Allow up to 30s for AI generation
 
+// Shared schema for a single quiz question
+const questionSchema = z.object({
+    question: z.string().describe("The quiz question, problem, or prompt."),
+    answer: z.string().describe("The correct answer (a single string)."),
+    options: z.array(z.string()).length(4).describe("Four answer choices: the correct answer and 3 plausible wrong answers."),
+    justification: z.string().describe("A short, kid-friendly sentence (1-2) explaining WHY this answer is correct or how to remember it.")
+})
+
 export async function POST(req: Request) {
     try {
-        const { subject, actionType, weekId, existingQuestions } = await req.json()
+        const { subject, actionType, weekId } = await req.json()
 
-        const seed = Math.floor(Math.random() * 1000000)
-        let themes = ["space exploration", "underwater ocean", "jungle animals", "superheroes", "magic academy", "sports tournament"]
-        if (actionType === 'extramile') {
-            themes = ["solving a global crisis", "running a tech startup", "exploring an uncharted planet", "managing a medieval kingdom"]
-        }
-        const randomTheme = themes[Math.floor(Math.random() * themes.length)]
+        // ---------------------------------------------------------------
+        // 1.  Build context from the database (always used by AI routes)
+        // ---------------------------------------------------------------
+        let topicsPrompt = ""
+        let exactContentStr = ""
 
-        let questionCount = subject === 'revise' ? 10 : 5
-
-        let uniquenessDirective = `Make these ${questionCount} questions COMPLETELY UNIQUE (Seed: ${seed}). Incorporate a fun theme of "${randomTheme}" into the questions or examples.`
-        if (actionType === 'extramile') {
-            uniquenessDirective += ` CRITICAL: This is an "Extra Mile" challenge. You must significantly increase the difficulty of the questions while retaining the core topic. Introduce multi-step logic, advanced vocabulary derivatives, or complex problem-solving scenarios.`
-        }
-
-        let dbContext = ""
-        // If it's not a simulated fallback week, we can pull structural context from the database
         if (weekId && !weekId.startsWith('simulated')) {
             const { createClient } = await import('@/lib/supabase-server')
             const supabase = await createClient()
 
             if (subject === 'revise') {
+                // For revision, gather all subjects' topics
                 const { data } = await supabase
                     .from('study_modules')
-                    .select('subject, topics_prompt')
+                    .select('subject, topics_prompt, exact_content')
                     .eq('week_id', weekId)
 
                 if (data && data.length > 0) {
-                    dbContext += `\nThis is a comprehensive REVISION quiz covering multiple subjects. The questions must focus on a mix of the following topics:\n`
                     data.forEach(mod => {
-                        if (mod.topics_prompt) {
-                            dbContext += `- ${mod.subject}: ${mod.topics_prompt}\n`
-                        } else {
-                            dbContext += `- ${mod.subject}\n`
+                        if (mod.topics_prompt) topicsPrompt += `- ${mod.subject}: ${mod.topics_prompt}\n`
+                        if (mod.exact_content?.length) {
+                            exactContentStr += `\n${mod.subject} items: ${JSON.stringify(mod.exact_content).substring(0, 500)}\n`
                         }
                     })
                 }
             } else {
                 const { data } = await supabase
                     .from('study_modules')
-                    .select('topics_prompt, structure_context')
+                    .select('topics_prompt, structure_context, exact_content')
                     .eq('week_id', weekId)
                     .eq('subject', subject)
                     .single()
 
-                if (data?.topics_prompt) {
-                    dbContext += `\nThe questions must focus exclusively on the following topics: ${data.topics_prompt}`
-                }
-                if (data?.structure_context) {
-                    dbContext += `\nYour questions MUST exactly imitate the structural format of these reference examples (swapping names and numbers): \n${data.structure_context}`
-                }
+                if (data?.topics_prompt) topicsPrompt = data.topics_prompt
+                if (data?.exact_content?.length) exactContentStr = JSON.stringify(data.exact_content)
             }
         } else if (weekId?.startsWith('simulated')) {
-            if (subject === 'vocab') dbContext += `\nCore Topics: Vocabulary from "Octopus Escapes Again!". Words to focus on: feature, record, assuming, mental, launch, thumbed, developed, incredibly, episodes, villains.\n`
-            if (subject === 'spelling') dbContext += `\nCore Topics: Words with the /ûr/ sound (ur, er, ir, ear, or). Focus words: return, courage, surface, purpose, first, turkey, heard, early, turtle, shirt, journal, search, curtain, burrow, hamburger.\n`
-            if (subject === 'math') dbContext += `\nCore Topics: Line plots, analyzing data from graphs, addition/subtraction word problems with larger numbers, interpreting data cycles.\n`
-            if (subject === 'science') dbContext += `\nCore Topics: Animal adaptations (structural and behavioral) and Ecosystems.\n`
+            // Demo fallback data
+            if (subject === 'vocab') {
+                topicsPrompt = "Vocabulary from 'Octopus Escapes Again!'"
+                exactContentStr = JSON.stringify([{word:"feature",definition:"An important part"},{word:"record",definition:"The best performance"}])
+            }
+            if (subject === 'spelling') {
+                topicsPrompt = "Words with the /ûr/ sound (ur, er, ir, ear, or)"
+                exactContentStr = JSON.stringify([{answer:"nurse"},{answer:"shirt"},{answer:"turkey"},{answer:"heard"},{answer:"return"}])
+            }
+            if (subject === 'math') topicsPrompt = "Line plots, data analysis, addition/subtraction word problems"
+            if (subject === 'science') topicsPrompt = "Animal adaptations (structural and behavioral) and Ecosystems"
         }
-        let prompt = `Generate ${questionCount} questions for 3rd grade. ${uniquenessDirective} ${dbContext}`
-        let schema: any = z.object({
-            questions: z.array(z.object({
-                question: z.string().describe("The word, definition, or question."),
-                answer: z.string().describe("The correct answer."),
-                options: z.array(z.string()).length(4).describe("The correct answer plus 3 highly plausible distractors."),
-                justification: z.string().describe("A 3rd-grade level sentence explaining the answer or using the word in context.")
-            }))
-        })
 
-        if (actionType === 'standard_refine') {
-            prompt = `I have a list of ${subject} questions from a curriculum. Your task is NOT to create new ones, but to UPGRADE these existing ones by adding 'options' (distractors) and a 'justification' (teacher's explanation) to each. 
-            Keep the original questions and answers exactly the same.
-            
-            Existing Data: ${JSON.stringify(existingQuestions)}
-            
-            ${uniquenessDirective} ${dbContext}`
-        } else if (subject === 'vocab') {
-            prompt = `Generate 5 vocabulary cards for a 3rd grader. ${uniquenessDirective} Use challenging 3rd-grade level words. ${dbContext}`
-            schema = z.object({
-                questions: z.array(z.object({
-                    word: z.string().describe("The vocabulary word."),
-                    definition: z.string().describe("The clear definition."),
-                    options: z.array(z.string()).length(4).describe("Four options: the correct word and 3 plausible other words from the same grade level."),
-                    justification: z.string().describe("A sentence using the word in a fun context that proves its meaning.")
-                }))
-            })
+        // ---------------------------------------------------------------
+        // 2.  Build the prompt based on action type
+        //     - 'ai_revision': New questions SIMILAR to the study guide
+        //     - 'extramile':   Same but harder / more complex
+        //     - 'revise':      Mixed multi-subject revision
+        // ---------------------------------------------------------------
+        const seed = Math.floor(Math.random() * 1000000)
+        const isExtraMile = actionType === 'extramile'
+        const questionCount = subject === 'revise' ? 10 : 5
+
+        const difficultyNote = isExtraMile
+            ? `CRITICAL: This is an "Extra Mile" hard-mode challenge. Make the questions significantly harder — add multi-step logic, use trickier wording, introduce synonyms/antonyms, or create more complex problem scenarios. Do NOT just repeat the exact items from the study guide.`
+            : `Create FRESH questions (Seed ${seed}) that test the same concepts — do NOT copy the exact items word-for-word.`
+
+        const contextBlock = [
+            topicsPrompt && `TOPIC: ${topicsPrompt}`,
+            exactContentStr && `STUDY GUIDE CONTENT (use this as the SOURCE MATERIAL to generate similar questions from):\n${exactContentStr}`
+        ].filter(Boolean).join('\n\n')
+
+        let prompt: string
+
+        if (subject === 'vocab') {
+            prompt = `You are a 3rd-grade teacher creating a VOCABULARY quiz.
+${contextBlock}
+
+Generate ${questionCount} vocabulary multiple-choice questions based STRICTLY on the topic and content above.
+${difficultyNote}
+
+For each question:
+- "question": Show the vocabulary word.
+- "answer": The correct definition.
+- "options": 4 choices — the correct definition + 3 plausible wrong definitions from similar-sounding or related words.
+- "justification": A fun example sentence using the word that shows its meaning.`
+
         } else if (subject === 'spelling') {
-            prompt = `Generate 5 spelling questions for a 3rd grader. ${uniquenessDirective} Provide a hint sentence with a blank. ${dbContext}`
-            schema = z.object({
-                questions: z.array(z.object({
-                    words: z.string().describe("A sentence with the word replaced by a blank, e.g., 'The ___ helped me.'"),
-                    answer: z.string().describe("The correctly spelled word."),
-                    options: z.array(z.string()).length(4).describe("Four options: the correct spelling and 3 common misspellings or related words."),
-                    justification: z.string().describe("A quick tip on how to remember this spelling (e.g. 'Remember the /ur/ sound is spelled with -ur here!').")
-                }))
-            })
-        } else if (subject === 'math') {
-            prompt = `Generate 5 math problems for 3rd grade. ${uniquenessDirective} ${dbContext}`
-        } else if (subject === 'science') {
-            prompt = `Generate 5 science questions for 3rd grade. ${uniquenessDirective} ${dbContext}`
+            prompt = `You are a 3rd-grade teacher creating a SPELLING quiz.
+${contextBlock}
+
+Generate ${questionCount} spelling questions based STRICTLY on the topic and content above.
+${difficultyNote}
+
+For each question:
+- "question": A sentence with the target word replaced by a blank (e.g., "The ___ helped me feel better.").
+- "answer": The correctly spelled target word.
+- "options": 4 choices — the correct spelling + 3 common misspellings or confusing look-alike words.
+- "justification": A short spelling tip (e.g., "Remember: 'nurse' uses the -ur spelling for the /ûr/ sound!").`
+
         } else if (subject === 'revise') {
-            prompt = `Generate a ${questionCount}-question mixed revision quiz for 3rd grade covering all the weekly topics. ${uniquenessDirective} ${dbContext}`
+            prompt = `You are a 3rd-grade teacher creating a MIXED REVISION quiz.
+Topics covered this week:
+${topicsPrompt}
+${exactContentStr ? `Study guide content:\n${exactContentStr}` : ''}
+
+Generate ${questionCount} revision questions covering a MIX of the subjects above.
+${difficultyNote}
+
+For each question:
+- "question": The quiz question.
+- "answer": The correct answer.
+- "options": 4 answer choices including the correct one.
+- "justification": A short explanation of why the answer is correct.`
+
+        } else {
+            // Generic for math, science, grammar, reading, etc.
+            prompt = `You are a 3rd-grade teacher creating a ${subject.toUpperCase()} quiz.
+${contextBlock}
+
+Generate ${questionCount} questions based STRICTLY on the topic and content above.
+${difficultyNote}
+
+For each question:
+- "question": A clear question or problem.
+- "answer": The correct answer (one short phrase or number).
+- "options": 4 answer choices — the correct one and 3 plausible wrong answers.
+- "justification": A short explanation of why the answer is correct, at a 3rd-grade reading level.`
         }
 
+        // ---------------------------------------------------------------
+        // 3.  Call Gemini
+        // ---------------------------------------------------------------
         const { object } = await generateObject({
             model: google('gemini-2.5-flash'),
-            schema: schema,
-            prompt: prompt,
-            temperature: 0.9,
+            schema: z.object({ questions: z.array(questionSchema) }),
+            prompt,
+            temperature: isExtraMile ? 1.0 : 0.8,
         })
 
         return Response.json((object as any).questions)
+
     } catch (error: any) {
         console.error("AI Generation Error:", error)
         return Response.json({ error: error?.message || 'Failed to generate quiz' }, { status: 500 })

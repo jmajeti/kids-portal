@@ -60,7 +60,7 @@ export default function QuizLanding() {
         return newArray;
     }
 
-    const handleGenerateAI = async (actionType: 'standard' | 'extramile') => {
+    const handleGenerateAI = async (actionType: 'ai_revision' | 'extramile') => {
         setIsGenerating(true)
         try {
             const res = await fetch('/api/gemini/quiz', {
@@ -74,7 +74,7 @@ export default function QuizLanding() {
                 setScore(0)
                 setView('quiz')
             } else {
-                alert("Failed to generate AI questions.")
+                alert("Failed to generate AI questions. Please try again.")
             }
         } catch (e) {
             console.error(e)
@@ -107,30 +107,12 @@ export default function QuizLanding() {
         }
     }
 
-    const handleStartStandard = async () => {
-        // If the standard questions don't have options/justification, we refine them with AI now 
-        // to avoid the 60s timeout during the initial PDF upload.
-        const needsRefinement = questions.length > 0 && (!questions[0].options || !questions[0].justification);
-        
-        if (needsRefinement) {
-            setIsGenerating(true)
-            try {
-                const res = await fetch('/api/gemini/quiz', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ subject, actionType: 'standard_refine', weekId, existingQuestions: questions })
-                })
-                const refined = await res.json()
-                if (refined && refined.length) {
-                    setQuestions(refined)
-                }
-            } catch (e) {
-                console.error("Refinement failed, proceeding with basic data", e)
-            } finally {
-                setIsGenerating(false)
-            }
+    // Standard = directly use what was extracted from the PDF. No AI call needed.
+    const handleStartStandard = () => {
+        if (questions.length === 0) {
+            alert("No questions found for this subject. Please ask your parent to upload the curriculum PDF.")
+            return
         }
-
         setScore(0)
         setView('quiz')
     }
@@ -179,7 +161,8 @@ export default function QuizLanding() {
                                 How do you want to practice today?
                             </p>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto mt-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 max-w-5xl mx-auto mt-8">
+                                {/* Study Guide */}
                                 <button
                                     onClick={() => handleGenerateGuide()}
                                     disabled={isGenerating}
@@ -190,23 +173,41 @@ export default function QuizLanding() {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-blue-900">Study Guide</h3>
-                                        <p className="text-xs font-medium text-blue-600/80 mt-1">AI-generated cheat sheet.</p>
+                                        <p className="text-xs font-medium text-blue-600/80 mt-1">AI-generated cheat sheet to review before the quiz.</p>
                                     </div>
                                 </button>
 
+                                {/* Standard — exact PDF content, no AI */}
                                 <button
                                     onClick={handleStartStandard}
-                                    className="group relative p-6 rounded-3xl bg-orange-50 border-4 border-orange-100 hover:border-orange-400 hover:bg-orange-100 transition-all text-left space-y-4 shadow-sm hover:shadow-md"
+                                    disabled={isGenerating}
+                                    className="group relative p-6 rounded-3xl bg-orange-50 border-4 border-orange-100 hover:border-orange-400 hover:bg-orange-100 transition-all text-left space-y-4 shadow-sm hover:shadow-md disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     <div className="bg-white w-14 h-14 rounded-2xl flex items-center justify-center text-orange-600 shadow-md group-hover:scale-110 transition-transform">
                                         <PlayCircle size={28} />
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-orange-900">Standard</h3>
-                                        <p className="text-xs font-medium text-orange-600/80 mt-1">Practice this week's list.</p>
+                                        <p className="text-xs font-medium text-orange-600/80 mt-1">Practice exactly this week's words &amp; questions from the study guide.</p>
                                     </div>
                                 </button>
 
+                                {/* AI Revision — new similar questions based on same topics */}
+                                <button
+                                    onClick={() => handleGenerateAI('ai_revision')}
+                                    disabled={isGenerating}
+                                    className="group relative p-6 rounded-3xl bg-teal-50 border-4 border-teal-100 hover:border-teal-400 hover:bg-teal-100 transition-all text-left space-y-4 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
+                                >
+                                    <div className="bg-white w-14 h-14 rounded-2xl flex items-center justify-center text-teal-600 shadow-md group-hover:scale-110 transition-transform">
+                                        {isGenerating ? <Loader2 size={28} className="animate-spin" /> : <Sparkles size={28} />}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-teal-900">AI Revision</h3>
+                                        <p className="text-xs font-medium text-teal-600/80 mt-1">Fresh questions on the same topics — great for extra practice!</p>
+                                    </div>
+                                </button>
+
+                                {/* Extra Mile — harder */}
                                 <button
                                     onClick={() => handleGenerateAI('extramile')}
                                     disabled={isGenerating}
@@ -217,7 +218,7 @@ export default function QuizLanding() {
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-white">Extra Mile</h3>
-                                        <p className="text-xs font-medium text-slate-300 mt-1">Challenge yourself!</p>
+                                        <p className="text-xs font-medium text-slate-300 mt-1">Harder AI questions on the same topics. Challenge yourself!</p>
                                     </div>
                                 </button>
                             </div>
@@ -225,6 +226,7 @@ export default function QuizLanding() {
                     </div>
                 </div>
             )}
+
 
             {view === 'guide' && (
                 <div className="min-h-screen bg-orange-50 p-4 md:p-8">
