@@ -10,7 +10,7 @@ export const maxDuration = 30 // Allow up to 30s for AI generation
 
 export async function POST(req: Request) {
     try {
-        const { subject, actionType, weekId } = await req.json()
+        const { subject, actionType, weekId, existingQuestions } = await req.json()
 
         const seed = Math.floor(Math.random() * 1000000)
         let themes = ["space exploration", "underwater ocean", "jungle animals", "superheroes", "magic academy", "sports tournament"]
@@ -72,14 +72,21 @@ export async function POST(req: Request) {
         let prompt = `Generate ${questionCount} questions for 3rd grade. ${uniquenessDirective} ${dbContext}`
         let schema: any = z.object({
             questions: z.array(z.object({
-                question: z.string().describe("The quiz question or problem."),
+                question: z.string().describe("The word, definition, or question."),
                 answer: z.string().describe("The correct answer."),
-                options: z.array(z.string()).length(4).describe("Four multiple choice options, including the correct answer and 3 highly plausible distractors."),
-                justification: z.string().describe("A short, encouraging explanation for a 3rd grader on why this answer is correct.")
+                options: z.array(z.string()).length(4).describe("The correct answer plus 3 highly plausible distractors."),
+                justification: z.string().describe("A 3rd-grade level sentence explaining the answer or using the word in context.")
             }))
         })
 
-        if (subject === 'vocab') {
+        if (actionType === 'standard_refine') {
+            prompt = `I have a list of ${subject} questions from a curriculum. Your task is NOT to create new ones, but to UPGRADE these existing ones by adding 'options' (distractors) and a 'justification' (teacher's explanation) to each. 
+            Keep the original questions and answers exactly the same.
+            
+            Existing Data: ${JSON.stringify(existingQuestions)}
+            
+            ${uniquenessDirective} ${dbContext}`
+        } else if (subject === 'vocab') {
             prompt = `Generate 5 vocabulary cards for a 3rd grader. ${uniquenessDirective} Use challenging 3rd-grade level words. ${dbContext}`
             schema = z.object({
                 questions: z.array(z.object({

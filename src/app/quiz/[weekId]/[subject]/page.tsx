@@ -107,7 +107,30 @@ export default function QuizLanding() {
         }
     }
 
-    const handleStartStandard = () => {
+    const handleStartStandard = async () => {
+        // If the standard questions don't have options/justification, we refine them with AI now 
+        // to avoid the 60s timeout during the initial PDF upload.
+        const needsRefinement = questions.length > 0 && (!questions[0].options || !questions[0].justification);
+        
+        if (needsRefinement) {
+            setIsGenerating(true)
+            try {
+                const res = await fetch('/api/gemini/quiz', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ subject, actionType: 'standard_refine', weekId, existingQuestions: questions })
+                })
+                const refined = await res.json()
+                if (refined && refined.length) {
+                    setQuestions(refined)
+                }
+            } catch (e) {
+                console.error("Refinement failed, proceeding with basic data", e)
+            } finally {
+                setIsGenerating(false)
+            }
+        }
+
         setScore(0)
         setView('quiz')
     }

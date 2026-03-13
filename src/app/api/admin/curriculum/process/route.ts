@@ -41,12 +41,7 @@ If the document uses a specific format for quizzes (like fill-in-the-blank), put
                     subject: z.enum(['vocab', 'spelling', 'math', 'science', 'reading', 'grammar', 'figurative', 'other']),
                     topicsPrompt: z.string().describe("Concise summary of what is being taught (e.g., 'Words with /ûr/ sound' or 'Line plots')"),
                     structureContext: z.string().optional().describe("If the text provides strict templates for questions, note them here."),
-                    exactContent: z.array(z.object({
-                        question: z.string().describe("The word, definition, or question."),
-                        answer: z.string().describe("The correct answer."),
-                        options: z.array(z.string()).length(4).describe("The correct answer plus 3 highly plausible distractors."),
-                        justification: z.string().describe("A 3rd-grade level sentence explaining the answer or using the word in context.")
-                    })).describe("The list of specific curriculum items from the PDF.")
+                    exactContent: z.array(z.any()).describe("A list of exact spelling words, vocab definitions, or math questions directly from the text.")
                 }))
             }),
             temperature: 0.1,
