@@ -8,6 +8,9 @@ ALTER TABLE public.study_modules ADD COLUMN IF NOT EXISTS topics_prompt TEXT;
 ALTER TABLE public.study_modules ADD COLUMN IF NOT EXISTS structure_context TEXT;
 ALTER TABLE public.study_modules ADD COLUMN IF NOT EXISTS exact_content JSONB;
 
+-- Drop legacy column if it exists to fix NOT NULL constraint error
+ALTER TABLE public.study_modules DROP COLUMN IF EXISTS content;
+
 -- Update RLS Policy to allow students to see their assigned curriculum
 DROP POLICY IF EXISTS "Students can read active curriculum" ON public.curriculum_weeks;
 CREATE POLICY "Students can read active curriculum"

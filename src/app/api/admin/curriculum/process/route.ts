@@ -78,6 +78,9 @@ If the document uses a specific format for quizzes (like fill-in-the-blank), put
             .insert(moduleInserts)
 
         if (modError) {
+            // Manual Rollback: Delete the weekRow we just created because the modules failed
+            console.error("Module insertion failed, rolling back week creation...")
+            await supabase.from('curriculum_weeks').delete().eq('id', weekRow.id)
             throw new Error(`Failed to insert study modules: ${modError.message}`)
         }
 
