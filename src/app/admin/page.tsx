@@ -106,11 +106,17 @@ export default function AdminDashboard() {
     const handleDeleteCurriculum = async (weekId: string) => {
         if (!confirm("Are you sure you want to delete this curriculum week and all its subjects?")) return
         setIsLoading(true)
+        console.log('Deleting curriculum:', weekId)
         const { error } = await supabase.from('curriculum_weeks').delete().eq('id', weekId)
-        if (!error && user) {
-            fetchStudents(user.id)
+        
+        if (!error) {
+            console.log('Deletion successful, refreshing...')
+            if (user) await fetchStudents(user.id)
+            setUploadMessage('✓ Curriculum deleted successfully.')
+            setTimeout(() => setUploadMessage(''), 3000)
         } else {
-            alert(error?.message)
+            console.error('Deletion error:', error)
+            alert(`Error deleting curriculum: ${error.message}`)
             setIsLoading(false)
         }
     }

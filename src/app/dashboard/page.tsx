@@ -36,10 +36,7 @@ export default function StudentDashboard() {
         // We will inject some hardcoded fallback data if the db is empty 
         // to ensure the UI can be tested immediately without admin setup.
         if (!data || data.length === 0) {
-            setWeeks([
-                { id: 'simulated-week-1', title: 'March 1st' },
-                { id: 'simulated-week-2', title: 'March 6' },
-            ])
+            setWeeks([])
         } else {
             setWeeks(data)
         }
