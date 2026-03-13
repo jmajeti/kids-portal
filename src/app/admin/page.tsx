@@ -110,11 +110,26 @@ export default function AdminDashboard() {
         if (!file) return
 
         setIsUploading(true)
-        setUploadMessage('Uploading and parsing PDF with AI... This may take up to 60 seconds.')
+        setUploadMessage('Extracting text locally from PDF...')
 
         try {
+            const pdfjsLib = await import('pdfjs-dist')
+            pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`
+            
+            const arrayBuffer = await file.arrayBuffer()
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+            let extractedText = ''
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i)
+                const content = await page.getTextContent()
+                const strings = content.items.map((item: any) => item.str)
+                extractedText += strings.join(' ') + '\n'
+            }
+
+            setUploadMessage('Analyzing curriculum with AI... This may take up to 60 seconds.')
+
             const formData = new FormData()
-            formData.append('file', file)
+            formData.append('rawText', extractedText)
             formData.append('studentId', selectedStudentForUpload)
 
             const res = await fetch('/api/admin/curriculum/process', {

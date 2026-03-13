@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { generateObject } from 'ai'
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { z } from 'zod'
-const pdfParse = require('pdf-parse')
 import { createClient } from '@/lib/supabase-server'
 
 const google = createGoogleGenerativeAI({
@@ -21,19 +20,12 @@ export async function POST(req: NextRequest) {
         }
 
         const formData = await req.formData()
-        const file = formData.get('file') as File
+        const rawText = formData.get('rawText') as string
         const studentId = formData.get('studentId') as string
 
-        if (!file) {
-            return NextResponse.json({ error: 'No file uploaded' }, { status: 400 })
+        if (!rawText) {
+            return NextResponse.json({ error: 'No text provided' }, { status: 400 })
         }
-
-        const arrayBuffer = await file.arrayBuffer()
-        const buffer = Buffer.from(arrayBuffer)
-
-        // 1. Extract raw text from PDF
-        const pdfData = await pdfParse(buffer)
-        const rawText = pdfData.text
 
         // 2. Query Gemini to structure the data 
         const { object } = await generateObject({
