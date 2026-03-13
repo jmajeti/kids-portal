@@ -44,8 +44,19 @@ export default function QuizLanding() {
             .single()
 
         if (data && data.exact_content) {
-            // IMPORTANT: Randomize the question order every time the quiz is selected per the user req
-            setQuestions(shuffleArray(data.exact_content))
+            // Normalize: the AI sometimes stores items with different key names
+            // (e.g. problem/solution, q/a, or even plain strings). 
+            // We map everything to a consistent { question, answer } shape.
+            const normalized = data.exact_content.map((item: any) => {
+                if (typeof item === 'string') return { question: item, answer: '' }
+                return {
+                    question: item.question ?? item.problem ?? item.q ?? item.word ?? item.term ?? JSON.stringify(item),
+                    answer:   item.answer   ?? item.solution ?? item.a ?? item.definition ?? '',
+                    options:  item.options,
+                    justification: item.justification,
+                }
+            }).filter((item: any) => item.question)
+            setQuestions(shuffleArray(normalized))
         }
         setIsLoading(false)
     }
