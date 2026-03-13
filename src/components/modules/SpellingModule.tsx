@@ -25,6 +25,7 @@ export function SpellingModule({ questions, score, setScore, onComplete }: any) 
     const currentItem = questions[currentIdx] || {}
 
     const options = useMemo(() => {
+        if (currentItem.options && currentItem.options.length > 0) return [...currentItem.options].sort(() => Math.random() - 0.5);
         if (!currentItem.answer) return [];
         const uniqueWords = [...new Set(questions.map((v: any) => v.answer))];
         const pool = uniqueWords.filter(w => w !== currentItem.answer);
@@ -45,7 +46,8 @@ export function SpellingModule({ questions, score, setScore, onComplete }: any) 
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance("Spell the word: " + text);
-                utterance.rate = 0.85;
+                utterance.rate = 0.75; // Slower for clarity
+                utterance.pitch = 1.1; // Slightly higher/clearer
                 window.speechSynthesis.speak(utterance);
             } else {
                 console.warn("TTS not supported in this browser.")
@@ -162,7 +164,32 @@ export function SpellingModule({ questions, score, setScore, onComplete }: any) 
                         <div className="flex flex-col items-center gap-4">
                             <div className="text-red-600 font-bold text-lg flex items-center gap-2"><XCircle /> Incorrect</div>
                             <p className="text-slate-700 font-medium">The correct spelling is: <span className="font-black tracking-widest text-pink-600 text-2xl block mt-2">{currentItem.answer}</span></p>
+                            
+                            {currentItem.justification && (
+                                <div className="bg-white/60 p-4 rounded-xl text-sm italic text-slate-600 border border-pink-50 mt-2 max-w-md">
+                                    <span className="font-bold text-pink-500 not-italic uppercase tracking-wider block mb-1 text-[10px]">Teacher's Note</span>
+                                    {currentItem.justification}
+                                </div>
+                            )}
+
                             <button onClick={proceedToNext} className="mt-4 flex items-center gap-2 text-slate-500 font-bold hover:text-slate-800">
+                                Next Word <ArrowRightCircle size={18} />
+                            </button>
+                        </div>
+                    </div>
+                )}
+                
+                {feedback === 'correct' && (
+                     <div className="mt-8 p-6 bg-green-50 border-2 border-green-100 rounded-xl animate-in fade-in slide-in-from-top-2">
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="text-green-600 font-bold text-lg flex items-center gap-2"><CheckCircle2 /> Perfect!</div>
+                            {currentItem.justification && (
+                                <div className="bg-white/60 p-4 rounded-xl text-sm italic text-slate-600 border border-pink-50 mt-2 max-w-md">
+                                    <span className="font-bold text-pink-500 not-italic uppercase tracking-wider block mb-1 text-[10px]">Teacher's Note</span>
+                                    {currentItem.justification}
+                                </div>
+                            )}
+                            <button onClick={proceedToNext} className="mt-2 flex items-center gap-2 text-slate-500 font-bold hover:text-slate-800">
                                 Next Word <ArrowRightCircle size={18} />
                             </button>
                         </div>

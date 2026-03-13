@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from 'react'
-import { ArrowRightCircle, AlertCircle, XCircle } from 'lucide-react'
+import { ArrowRightCircle, AlertCircle, XCircle, CheckCircle2 } from 'lucide-react'
 import { checkMatch } from './VocabModule'
 
 export function GenericMCModule({ questions, score, setScore, onComplete }: any) {
@@ -20,6 +20,7 @@ export function GenericMCModule({ questions, score, setScore, onComplete }: any)
     const item = questions[currentIdx] || {}
 
     const options = useMemo(() => {
+        if (item.options && item.options.length > 0) return [...item.options].sort(() => Math.random() - 0.5);
         if (!item.answer) return [];
         const unique = [...new Set(questions.map((q: any) => q.answer))].filter(a => a !== item.answer);
         let distractors = unique.sort(() => Math.random() - 0.5).slice(0, 3);
@@ -94,11 +95,39 @@ export function GenericMCModule({ questions, score, setScore, onComplete }: any)
                     </div>
                 )}
 
-                {feedback === 'wrong' && (
-                    <div className="mt-8 p-6 bg-red-50 border-2 border-red-100 rounded-xl animate-in fade-in slide-in-from-top-2">
+                {(feedback === 'wrong' || (feedback === 'correct' && !showOptions && false)) && (
+                    <div className={`mt-8 p-6 rounded-xl animate-in fade-in slide-in-from-top-2 border-2 ${feedback === 'correct' ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
                         <div className="flex flex-col items-center gap-4">
-                            <div className="text-red-600 font-bold text-lg flex items-center gap-2"><XCircle /> Incorrect</div>
-                            <p className="text-slate-700">The correct answer is: <span className="font-black text-orange-600 text-xl">{item.answer}</span></p>
+                            <div className={`${feedback === 'correct' ? 'text-green-600' : 'text-red-600'} font-bold text-lg flex items-center gap-2`}>
+                                {feedback === 'correct' ? <CheckCircle2 /> : <XCircle />}
+                                {feedback === 'correct' ? 'Great Job!' : 'Incorrect'}
+                            </div>
+                            {feedback === 'wrong' && <p className="text-slate-700">The correct answer is: <span className="font-black text-orange-600 text-xl">{item.answer}</span></p>}
+                            
+                            {item.justification && (
+                                <div className="bg-white/60 p-4 rounded-xl text-sm italic text-slate-600 border border-orange-50 mt-2 max-w-md">
+                                    <span className="font-bold text-orange-500 not-italic uppercase tracking-wider block mb-1 text-[10px]">Teacher's Note</span>
+                                    {item.justification}
+                                </div>
+                            )}
+
+                            <button onClick={proceedToNext} className="mt-2 flex items-center gap-2 text-slate-500 font-bold hover:text-slate-800">
+                                Next <ArrowRightCircle size={18} />
+                            </button>
+                        </div>
+                    </div>
+                )}
+                
+                {feedback === 'correct' && showOptions && (
+                     <div className="mt-8 p-6 bg-green-50 border-2 border-green-100 rounded-xl animate-in fade-in slide-in-from-top-2">
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="text-green-600 font-bold text-lg flex items-center gap-2"><CheckCircle2 /> Correct!</div>
+                            {item.justification && (
+                                <div className="bg-white/60 p-4 rounded-xl text-sm italic text-slate-600 border border-orange-50 mt-2 max-w-md">
+                                    <span className="font-bold text-orange-500 not-italic uppercase tracking-wider block mb-1 text-[10px]">Teacher's Note</span>
+                                    {item.justification}
+                                </div>
+                            )}
                             <button onClick={proceedToNext} className="mt-2 flex items-center gap-2 text-slate-500 font-bold hover:text-slate-800">
                                 Next <ArrowRightCircle size={18} />
                             </button>

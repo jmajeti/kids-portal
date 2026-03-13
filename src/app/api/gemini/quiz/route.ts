@@ -72,29 +72,35 @@ export async function POST(req: Request) {
         let prompt = `Generate ${questionCount} questions for 3rd grade. ${uniquenessDirective} ${dbContext}`
         let schema: any = z.object({
             questions: z.array(z.object({
-                question: z.string(),
-                answer: z.string()
+                question: z.string().describe("The quiz question or problem."),
+                answer: z.string().describe("The correct answer."),
+                options: z.array(z.string()).length(4).describe("Four multiple choice options, including the correct answer and 3 highly plausible distractors."),
+                justification: z.string().describe("A short, encouraging explanation for a 3rd grader on why this answer is correct.")
             }))
         })
 
         if (subject === 'vocab') {
-            prompt = `Generate 5 vocabulary flashcards for a 3rd grader. ${uniquenessDirective} Use challenging 3rd-grade level words. ${dbContext}`
+            prompt = `Generate 5 vocabulary cards for a 3rd grader. ${uniquenessDirective} Use challenging 3rd-grade level words. ${dbContext}`
             schema = z.object({
                 questions: z.array(z.object({
-                    word: z.string(),
-                    definition: z.string()
+                    word: z.string().describe("The vocabulary word."),
+                    definition: z.string().describe("The clear definition."),
+                    options: z.array(z.string()).length(4).describe("Four options: the correct word and 3 plausible other words from the same grade level."),
+                    justification: z.string().describe("A sentence using the word in a fun context that proves its meaning.")
                 }))
             })
         } else if (subject === 'spelling') {
-            prompt = `Generate 5 spelling questions for a 3rd grader. ${uniquenessDirective} Hint should describe the word or show a fill-in-the-blank. ${dbContext}`
+            prompt = `Generate 5 spelling questions for a 3rd grader. ${uniquenessDirective} Provide a hint sentence with a blank. ${dbContext}`
             schema = z.object({
                 questions: z.array(z.object({
-                    words: z.string(),
-                    answer: z.string()
+                    words: z.string().describe("A sentence with the word replaced by a blank, e.g., 'The ___ helped me.'"),
+                    answer: z.string().describe("The correctly spelled word."),
+                    options: z.array(z.string()).length(4).describe("Four options: the correct spelling and 3 common misspellings or related words."),
+                    justification: z.string().describe("A quick tip on how to remember this spelling (e.g. 'Remember the /ur/ sound is spelled with -ur here!').")
                 }))
             })
         } else if (subject === 'math') {
-            prompt = `Generate 5 math problems for 3rd grade (Multi-digit addition/subtraction or rounding). ${uniquenessDirective} ${dbContext}`
+            prompt = `Generate 5 math problems for 3rd grade. ${uniquenessDirective} ${dbContext}`
         } else if (subject === 'science') {
             prompt = `Generate 5 science questions for 3rd grade. ${uniquenessDirective} ${dbContext}`
         } else if (subject === 'revise') {
