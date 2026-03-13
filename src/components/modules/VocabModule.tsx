@@ -43,7 +43,7 @@ export function VocabModule({ questions, score, setScore, onComplete }: any) {
         e.preventDefault();
         if (!input) return;
         if (checkMatch(input, currentItem.word)) {
-            setScore((s: number) => s + 1); setFeedback('correct'); setTimeout(() => proceedToNext(), 1500);
+            setScore((s: number) => s + 1); setFeedback('correct');
         } else {
             setShowOptions(true); setInput('');
         }
@@ -52,7 +52,7 @@ export function VocabModule({ questions, score, setScore, onComplete }: any) {
     const handleOptionSelect = (word: string) => {
         if (feedback) return;
         if (word === currentItem.word) {
-            setFeedback('correct'); setTimeout(() => proceedToNext(), 1500);
+            setScore((s: number) => s + 1); setFeedback('correct');
         } else {
             setFeedback('wrong');
         }
@@ -106,12 +106,12 @@ export function VocabModule({ questions, score, setScore, onComplete }: any) {
                     </div>
                 )}
 
-                {(feedback === 'wrong' || (feedback === 'correct' && !showOptions && false)) && (
+                {feedback && (
                     <div className={`mt-8 p-6 rounded-xl animate-in fade-in slide-in-from-top-2 border-2 ${feedback === 'correct' ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
                         <div className="flex flex-col items-center gap-4">
                             <div className={`${feedback === 'correct' ? 'text-green-600' : 'text-red-600'} font-bold text-lg flex items-center gap-2`}>
                                 {feedback === 'correct' ? <CheckCircle2 /> : <XCircle />}
-                                {feedback === 'correct' ? 'Great Job!' : 'Incorrect'}
+                                {feedback === 'correct' ? '🎉 Correct!' : 'Incorrect'}
                             </div>
                             {feedback === 'wrong' && <p className="text-slate-700">The definition describes: <span className="font-black text-blue-600 text-xl">{currentItem.word}</span></p>}
                             
@@ -122,24 +122,7 @@ export function VocabModule({ questions, score, setScore, onComplete }: any) {
                                 </div>
                             )}
 
-                            <button onClick={proceedToNext} className="mt-2 flex items-center gap-2 text-slate-500 font-bold hover:text-slate-800">
-                                Next <ArrowRightCircle size={18} />
-                            </button>
-                        </div>
-                    </div>
-                )}
-                
-                {feedback === 'correct' && showOptions && (
-                     <div className="mt-8 p-6 bg-green-50 border-2 border-green-100 rounded-xl animate-in fade-in slide-in-from-top-2">
-                        <div className="flex flex-col items-center gap-4">
-                            <div className="text-green-600 font-bold text-lg flex items-center gap-2"><CheckCircle2 /> Correct!</div>
-                            {currentItem.justification && (
-                                <div className="bg-white/60 p-4 rounded-xl text-sm italic text-slate-600 border border-blue-50 mt-2 max-w-md">
-                                    <span className="font-bold text-blue-500 not-italic uppercase tracking-wider block mb-1 text-[10px]">Teacher's Note</span>
-                                    {currentItem.justification}
-                                </div>
-                            )}
-                            <button onClick={proceedToNext} className="mt-2 flex items-center gap-2 text-slate-500 font-bold hover:text-slate-800">
+                            <button onClick={proceedToNext} className="mt-2 px-6 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-full font-bold flex items-center gap-2 transition-all">
                                 Next <ArrowRightCircle size={18} />
                             </button>
                         </div>

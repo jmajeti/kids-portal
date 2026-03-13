@@ -82,7 +82,7 @@ export function SpellingModule({ questions, score, setScore, onComplete }: any) 
         e.preventDefault();
         if (!input) return;
         if (checkMatch(input, currentItem.answer)) {
-            setScore((s: number) => s + 1); setFeedback('correct'); setTimeout(() => proceedToNext(), 1500);
+            setScore((s: number) => s + 1); setFeedback('correct');
         } else {
             setShowOptions(true); setInput('');
         }
@@ -91,7 +91,7 @@ export function SpellingModule({ questions, score, setScore, onComplete }: any) 
     const handleOptionSelect = (word: string) => {
         if (feedback) return;
         if (word === currentItem.answer) {
-            setFeedback('correct'); setTimeout(() => proceedToNext(), 1500);
+            setScore((s: number) => s + 1); setFeedback('correct');
         } else {
             setFeedback('wrong');
         }
@@ -157,14 +157,17 @@ export function SpellingModule({ questions, score, setScore, onComplete }: any) 
                     </div>
                 )}
 
-                {feedback === 'correct' && <div className="text-green-500 font-black text-xl flex items-center justify-center gap-2 animate-bounce mt-8 p-4 bg-green-50 rounded-xl"><CheckCircle2 size={28} /> Perfect!</div>}
-
-                {feedback === 'wrong' && (
-                    <div className="mt-8 p-6 bg-red-50 border-2 border-red-100 rounded-xl animate-in fade-in slide-in-from-top-2">
+                {feedback && (
+                    <div className={`mt-8 p-6 rounded-xl animate-in fade-in slide-in-from-top-2 border-2 ${feedback === 'correct' ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
                         <div className="flex flex-col items-center gap-4">
-                            <div className="text-red-600 font-bold text-lg flex items-center gap-2"><XCircle /> Incorrect</div>
-                            <p className="text-slate-700 font-medium">The correct spelling is: <span className="font-black tracking-widest text-pink-600 text-2xl block mt-2">{currentItem.answer}</span></p>
-                            
+                            <div className={`${feedback === 'correct' ? 'text-green-600' : 'text-red-600'} font-bold text-lg flex items-center gap-2`}>
+                                {feedback === 'correct' ? <CheckCircle2 /> : <XCircle />}
+                                {feedback === 'correct' ? '🎉 Perfect Spelling!' : 'Incorrect'}
+                            </div>
+                            {feedback === 'wrong' && (
+                                <p className="text-slate-700 font-medium">The correct spelling is: <span className="font-black tracking-widest text-pink-600 text-2xl block mt-2">{currentItem.answer}</span></p>
+                            )}
+
                             {currentItem.justification && (
                                 <div className="bg-white/60 p-4 rounded-xl text-sm italic text-slate-600 border border-pink-50 mt-2 max-w-md">
                                     <span className="font-bold text-pink-500 not-italic uppercase tracking-wider block mb-1 text-[10px]">Teacher's Note</span>
@@ -172,24 +175,7 @@ export function SpellingModule({ questions, score, setScore, onComplete }: any) 
                                 </div>
                             )}
 
-                            <button onClick={proceedToNext} className="mt-4 flex items-center gap-2 text-slate-500 font-bold hover:text-slate-800">
-                                Next Word <ArrowRightCircle size={18} />
-                            </button>
-                        </div>
-                    </div>
-                )}
-                
-                {feedback === 'correct' && (
-                     <div className="mt-8 p-6 bg-green-50 border-2 border-green-100 rounded-xl animate-in fade-in slide-in-from-top-2">
-                        <div className="flex flex-col items-center gap-4">
-                            <div className="text-green-600 font-bold text-lg flex items-center gap-2"><CheckCircle2 /> Perfect!</div>
-                            {currentItem.justification && (
-                                <div className="bg-white/60 p-4 rounded-xl text-sm italic text-slate-600 border border-pink-50 mt-2 max-w-md">
-                                    <span className="font-bold text-pink-500 not-italic uppercase tracking-wider block mb-1 text-[10px]">Teacher's Note</span>
-                                    {currentItem.justification}
-                                </div>
-                            )}
-                            <button onClick={proceedToNext} className="mt-2 flex items-center gap-2 text-slate-500 font-bold hover:text-slate-800">
+                            <button onClick={proceedToNext} className="mt-2 px-6 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-full font-bold flex items-center gap-2 transition-all">
                                 Next Word <ArrowRightCircle size={18} />
                             </button>
                         </div>
