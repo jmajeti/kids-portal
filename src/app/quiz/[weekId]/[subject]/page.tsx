@@ -49,6 +49,22 @@ export default function QuizLanding() {
             // We map everything to a consistent { question, answer } shape.
             const normalized = data.exact_content.map((item: any) => {
                 if (typeof item === 'string') return { question: item, answer: '' }
+                
+                if (subject === 'vocab') {
+                    // Gemini parsing sets `question` = word, `answer` = definition.
+                    // VocabModule expects `question` = definition (prompt), `answer` = word (target). 
+                    // So we must flip them!
+                    const word = item.word ?? item.term ?? item.question ?? '';
+                    const definition = item.definition ?? item.answer ?? item.solution ?? '';
+
+                    return {
+                        question: definition,
+                        answer: word,
+                        options: item.options,
+                        justification: item.justification,
+                    }
+                }
+
                 return {
                     question: item.question ?? item.problem ?? item.q ?? item.word ?? item.term ?? JSON.stringify(item),
                     answer:   item.answer   ?? item.solution ?? item.a ?? item.definition ?? '',
@@ -319,9 +335,9 @@ export default function QuizLanding() {
 // Simulated data fallback mapper
 function getMockData(subject: string) {
     if (subject === 'vocab') return [
-        { word: "feature", definition: "An important part or characteristic of something." },
-        { word: "record", definition: "The best performance in a specific event." },
-        { word: "assuming", definition: "Supposing something is true without proof." },
+        { answer: "feature", question: "An important part or characteristic of something." },
+        { answer: "record", question: "The best performance in a specific event." },
+        { answer: "assuming", question: "Supposing something is true without proof." },
     ]
     if (subject === 'spelling') return [
         { words: "The n_rse helped me feel better.", answer: "nurse" },

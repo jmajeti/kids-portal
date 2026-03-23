@@ -32,17 +32,17 @@ export function VocabModule({ questions, score, setScore, onComplete }: any) {
 
     const options = useMemo(() => {
         if (currentItem.options && currentItem.options.length > 0) return [...currentItem.options].sort(() => Math.random() - 0.5);
-        if (!currentItem.word) return [];
-        const uniqueWords = [...new Set(questions.map((v: any) => v.word))];
-        const pool = uniqueWords.filter(w => w !== currentItem.word);
+        if (!currentItem.answer) return [];
+        const uniqueWords = [...new Set(questions.map((v: any) => v.answer))];
+        const pool = uniqueWords.filter(w => w !== currentItem.answer);
         const shuffledPool = pool.length < 2 ? ["Apple", "Run"] : pool.sort(() => Math.random() - 0.5).slice(0, 2);
-        return [currentItem.word, ...shuffledPool].sort(() => Math.random() - 0.5);
+        return [currentItem.answer, ...shuffledPool].sort(() => Math.random() - 0.5);
     }, [currentItem, questions]);
 
     const handleInputSubmit = (e: any) => {
         e.preventDefault();
         if (!input) return;
-        if (checkMatch(input, currentItem.word)) {
+        if (checkMatch(input, currentItem.answer)) {
             setScore((s: number) => s + 1); setFeedback('correct');
         } else {
             setShowOptions(true); setInput('');
@@ -51,7 +51,7 @@ export function VocabModule({ questions, score, setScore, onComplete }: any) {
 
     const handleOptionSelect = (word: string) => {
         if (feedback) return;
-        if (word === currentItem.word) {
+        if (word === currentItem.answer) {
             setScore((s: number) => s + 1); setFeedback('correct');
         } else {
             setFeedback('wrong');
@@ -68,7 +68,7 @@ export function VocabModule({ questions, score, setScore, onComplete }: any) {
             </div>
 
             <div className="bg-white rounded-3xl shadow-lg p-8 sm:p-12 text-center border-2 border-blue-100">
-                <h2 className="text-2xl font-bold text-slate-600 mb-8 italic leading-relaxed">"{currentItem.definition}"</h2>
+                <h2 className="text-2xl font-bold text-slate-600 mb-8 italic leading-relaxed">"{currentItem.question}"</h2>
 
                 {!showOptions ? (
                     <form onSubmit={handleInputSubmit} className="space-y-4">
@@ -94,9 +94,9 @@ export function VocabModule({ questions, score, setScore, onComplete }: any) {
                                     disabled={feedback === 'wrong'}
                                     onClick={() => handleOptionSelect(word)}
                                     className={`w-full text-lg py-4 rounded-xl font-bold border-2 transition-all active:scale-95
-                    ${feedback === 'correct' && word === currentItem.word ? 'bg-green-500 text-white border-green-500 shadow-lg' :
-                                            feedback === 'wrong' && word !== currentItem.word ? 'opacity-50 border-slate-200 text-slate-400' :
-                                                feedback === 'wrong' && word === currentItem.word ? 'bg-green-500 text-white border-green-500 shadow-lg' :
+                    ${feedback === 'correct' && word === currentItem.answer ? 'bg-green-500 text-white border-green-500 shadow-lg' :
+                                            feedback === 'wrong' && word !== currentItem.answer ? 'opacity-50 border-slate-200 text-slate-400' :
+                                                feedback === 'wrong' && word === currentItem.answer ? 'bg-green-500 text-white border-green-500 shadow-lg' :
                                                     'bg-white border-blue-200 text-blue-600 hover:bg-blue-50'}`}
                                 >
                                     {word}
@@ -113,7 +113,7 @@ export function VocabModule({ questions, score, setScore, onComplete }: any) {
                                 {feedback === 'correct' ? <CheckCircle2 /> : <XCircle />}
                                 {feedback === 'correct' ? '🎉 Correct!' : 'Incorrect'}
                             </div>
-                            {feedback === 'wrong' && <p className="text-slate-700">The definition describes: <span className="font-black text-blue-600 text-xl">{currentItem.word}</span></p>}
+                            {feedback === 'wrong' && <p className="text-slate-700">The definition describes: <span className="font-black text-blue-600 text-xl">{currentItem.answer}</span></p>}
                             
                             {currentItem.justification && (
                                 <div className="bg-white/60 p-4 rounded-xl text-sm italic text-slate-600 border border-blue-50 mt-2 max-w-md">

@@ -99,9 +99,9 @@ Generate ${questionCount} vocabulary multiple-choice questions based STRICTLY on
 ${difficultyNote}
 
 For each question:
-- "question": Show the vocabulary word.
-- "answer": The correct definition.
-- "options": 4 choices — the correct definition + 3 plausible wrong definitions from similar-sounding or related words.
+- "question": The correct definition.
+- "answer": The vocabulary word itself.
+- "options": 4 choices — the correct vocabulary word + 3 plausible wrong vocabulary words.
 - "justification": A fun example sentence using the word that shows its meaning.`
 
         } else if (subject === 'spelling') {

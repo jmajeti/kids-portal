@@ -36,18 +36,30 @@ export function SpellingModule({ questions, score, setScore, onComplete }: any) 
     const playTTS = async (text: string) => {
         setIsAudioLoading(true)
         try {
-            // Stop any currently playing audio
             if (audioRef.current) {
                 audioRef.current.pause()
                 audioRef.current = null
             }
 
-            // Use Browser Speech Synthesis instead of Gemini direct for stability & offline support
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance("Spell the word: " + text);
-                utterance.rate = 0.75; // Slower for clarity
-                utterance.pitch = 1.1; // Slightly higher/clearer
+                
+                // Prioritize natural sounding voices, fall back to any US English, then default
+                const voices = window.speechSynthesis.getVoices();
+                const premiumVoice = 
+                    voices.find(v => v.name.includes("Google US English") || v.name.includes("Google UK English Female")) ||
+                    voices.find(v => v.name.includes("Samantha") || v.name.includes("Victoria") || v.name.includes("Daniel")) ||
+                    voices.find(v => v.name.includes("Natural") || v.name.includes("Premium")) ||
+                    voices.find(v => v.lang === "en-US" && v.name.includes("Female")) ||
+                    voices.find(v => v.lang.startsWith("en"));
+                    
+                if (premiumVoice) {
+                    utterance.voice = premiumVoice;
+                }
+                
+                utterance.rate = 0.8; // Better pacing
+                utterance.pitch = 1.0; 
                 window.speechSynthesis.speak(utterance);
             } else {
                 console.warn("TTS not supported in this browser.")
@@ -137,7 +149,7 @@ export function SpellingModule({ questions, score, setScore, onComplete }: any) 
                 ) : (
                     <div className="animate-in fade-in zoom-in duration-300">
                         <div className="text-orange-500 font-bold mb-4 flex justify-center items-center gap-2"><AlertCircle size={20} /> Not quite! Let's try multiple choice.</div>
-                        <p className="text-slate-500 font-medium mb-6 text-sm italic">Hint: {currentItem.words || "Sound it out!"}</p>
+                        <p className="text-slate-500 font-medium mb-6 text-sm italic">Hint: {currentItem.words || currentItem.question || "Sound it out!"}</p>
                         <div className="grid gap-4">
                             {options.map((word: string) => (
                                 <button
