@@ -31,10 +31,13 @@ export async function POST(req: NextRequest) {
         const { object } = await generateObject({
             model: google('gemini-2.5-flash'),
             system: `You are an expert AI curriculum parser. You will be provided the messy raw text scraped from a school newsletter/curriculum PDF. 
-Your goal is to extract the date/title of the week, and separate out the core learning subjects (e.g., vocab, spelling, math, science, reading, figurative).
-For each subject, summarize the 'topics_prompt' (the exact rule or topic) and include 'exact_content' based on the word lists or questions provided.
-If the document uses a specific format for quizzes (like fill-in-the-blank), put that in 'structure_context'.`,
-            prompt: `Parse this curriculum text: \n\n${rawText.substring(0, 15000)}`,
+Your goal is to extract the date/title of the week, and separate out the core learning subjects (e.g., vocab, spelling, math, science, reading, grammar).
+RULES FOR EXACT CONTENT:
+1. For SPELLING: The text will usually just list words. You MUST invent a short, 3rd-grade level fill-in-the-blank sentence for the 'question' (e.g., "The bird flew in the ___"), and put the spelling word as the 'answer'. Do NOT just put the word in both fields.
+2. For VOCAB: Put the vocabulary word in 'question' and its exact definition in 'answer'.
+3. For MATH/SCIENCE/GRAMMAR: If there are specific facts or problems, extract them.
+4. If a subject only has scheduling info, fluff, or notes like "See attached chart" or "Unit test on Friday", DO NOT create any exactContent for it. Return an empty array. Do not invent fake questions like "Animal adaptations concepts".`,
+            prompt: `Parse this curriculum text. Ignore non-academic scheduling fluff:\n\n${rawText.substring(0, 15000)}`,
             schema: z.object({
                 weekTitle: z.string().describe("The exact week label or date range drawn from the top of the PDF. e.g. 'March 6th' or 'Week of May 10th'"),
                 modules: z.array(z.object({
@@ -42,9 +45,9 @@ If the document uses a specific format for quizzes (like fill-in-the-blank), put
                     topicsPrompt: z.string().describe("Concise summary of what is being taught (e.g., 'Words with /ûr/ sound' or 'Line plots')"),
                     structureContext: z.string().optional().describe("If the text provides strict templates for questions, note them here."),
                     exactContent: z.array(z.object({
-                        question: z.string().describe("The spelling word, vocab word/definition, math problem, or science question exactly as it appears in the PDF."),
-                        answer: z.string().describe("The correct answer, definition, or solution.")
-                    })).describe("A list of curriculum items extracted directly from the PDF. Every entry MUST have question and answer.")
+                        question: z.string().describe("For spelling: a fill-in-the-blank sentence. For vocab: the word. Otherwise, the question/problem."),
+                        answer: z.string().describe("The correct answer, definition, spelling word, or solution.")
+                    })).describe("A list of testable items. Leave EMPTY if the text only contains fluff like 'Test on Friday' or 'See attached'.")
                 }))
             }),
             temperature: 0.1,

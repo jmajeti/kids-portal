@@ -1,0 +1,192 @@
+[
+  {
+    "subject": "science",
+    "topics_prompt": "Animal adaptations unit",
+    "exact_content": [
+      {
+        "answer": "N/A (Unit test on 3/27, science research presentations on Thursday).",
+        "question": "Animal adaptations concepts"
+      }
+    ]
+  },
+  {
+    "subject": "vocab",
+    "topics_prompt": "Module 6 Week 3 Vocabulary words and definitions",
+    "exact_content": [
+      {
+        "answer": "If one animal nuzzled another, it gently touched the animal with its nose and mouth.",
+        "question": "nuzzled"
+      },
+      {
+        "answer": "If an animal bared its teeth, it showed them to others.",
+        "question": "bared"
+      },
+      {
+        "answer": "An assistant is someone who helps another person do his or her work.",
+        "question": "assistant"
+      },
+      {
+        "answer": "If you refused something, you did not take it.",
+        "question": "refused"
+      },
+      {
+        "answer": "A nursery is a place where babies or young children are cared for.",
+        "question": "nursery"
+      },
+      {
+        "answer": "If you pounce, you jump on something suddenly and hold on to it.",
+        "question": "pounce"
+      }
+    ]
+  },
+  {
+    "subject": "spelling",
+    "topics_prompt": "Words with /âr/ and /îr/ sounds",
+    "exact_content": [
+      {
+        "answer": "air",
+        "question": "air"
+      },
+      {
+        "answer": "wear",
+        "question": "wear"
+      },
+      {
+        "answer": "chair",
+        "question": "chair"
+      },
+      {
+        "answer": "fear",
+        "question": "fear"
+      },
+      {
+        "answer": "bare",
+        "question": "bare"
+      },
+      {
+        "answer": "bear",
+        "question": "bear"
+      },
+      {
+        "answer": "hair",
+        "question": "hair"
+      },
+      {
+        "answer": "care",
+        "question": "care"
+      },
+      {
+        "answer": "pear",
+        "question": "pear"
+      },
+      {
+        "answer": "pair",
+        "question": "pair"
+      },
+      {
+        "answer": "share",
+        "question": "share"
+      },
+      {
+        "answer": "near",
+        "question": "near"
+      },
+      {
+        "answer": "tear",
+        "question": "tear"
+      },
+      {
+        "answer": "beard",
+        "question": "beard"
+      },
+      {
+        "answer": "shearing",
+        "question": "shearing"
+      },
+      {
+        "answer": "stairway",
+        "question": "stairway"
+      },
+      {
+        "answer": "bleary",
+        "question": "bleary"
+      },
+      {
+        "answer": "careless",
+        "question": "careless"
+      }
+    ]
+  },
+  {
+    "subject": "grammar",
+    "topics_prompt": "Suffixes, /âr/ and /îr/ sounds, verb 'be' forms, helping verbs, homographs, and homophones",
+    "exact_content": [
+      {
+        "answer": "A word part added to the beginning of a base word that changes the meaning of a word.",
+        "question": "What is a suffix?"
+      },
+      {
+        "answer": "The suffix -ly means 'in this way'. It changes an adjective into an adverb that describes a verb.",
+        "question": "What does the suffix -ly mean and what does it do?"
+      },
+      {
+        "answer": "The patterns air, are, ear, and ere make the /âr/ sound.",
+        "question": "What patterns make the /âr/ sound?"
+      },
+      {
+        "answer": "The patterns ear, eer, eir, ere, and ier make the /îr/ sound.",
+        "question": "What patterns make the /îr/ sound?"
+      },
+      {
+        "answer": "Am, is, and are show present tense.",
+        "question": "What forms of the verb 'be' show present tense?"
+      },
+      {
+        "answer": "Was and were show past tense.",
+        "question": "What forms of the verb 'be' show past tense?"
+      },
+      {
+        "answer": "is, was, and has",
+        "question": "Which helping verbs are used with singular nouns and pronouns he, she, it?"
+      },
+      {
+        "answer": "are, have, and were",
+        "question": "Which helping verbs are used with plural nouns and pronouns you, we, they?"
+      },
+      {
+        "answer": "Words that have the same spelling, but more than one meaning or pronunciation.",
+        "question": "What are homographs?"
+      },
+      {
+        "answer": "Words that are pronounced the same way, but have a different meaning or spelling.",
+        "question": "What are homophones?"
+      }
+    ]
+  },
+  {
+    "subject": "reading",
+    "topics_prompt": "Module 6 Week 3 Reading and Writing topics",
+    "exact_content": [
+      {
+        "answer": "See attached HMH anchor charts.",
+        "question": "Monitor and Clarify"
+      },
+      {
+        "answer": "See attached HMH anchor charts.",
+        "question": "Text Structure"
+      },
+      {
+        "answer": "See attached HMH anchor charts.",
+        "question": "Text Features"
+      },
+      {
+        "answer": "See attached HMH anchor charts.",
+        "question": "Central Idea"
+      },
+      {
+        "answer": "See attached HMH anchor charts.",
+        "question": "Synthesize"
+      }
+    ]
+  }
+]
